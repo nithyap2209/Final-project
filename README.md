@@ -460,7 +460,8 @@ By leveraging machine learning techniques, we aim to build robust models that ca
 ![image](https://github.com/nithyap2209/Final-project/assets/92367257/ad36ecc3-a429-4ee3-8d87-51400d707c74)
 
 
-Conclusion
+### Conclusion
+
 In conclusion, this project successfully developed a predictive model for loan status approval using various machine learning techniques. The logistic regression model emerged as the most effective, demonstrating high accuracy, precision, and recall, particularly after hyperparameter optimization through GridSearchCV. Key features such as Applicant Income, Loan Amount, and Credit History significantly influenced the prediction outcomes.
 
 The comprehensive data exploration, visualization, and preprocessing steps ensured the reliability of the models. Visualizations provided deep insights into the data distributions and relationships between features, while rigorous evaluation metrics confirmed the models' robustness.
