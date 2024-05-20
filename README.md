@@ -630,15 +630,18 @@ Following is the Data Dictionary for Credit Card dataset:<br>
     data.head()
     data.describe()
   ### Data Cleaning
-    First, we check the missing/corrupted values.
+  First, we check the missing/corrupted values.
+    
     data.isna().sum()
-    We will impute these missing values with the median value.
-    # impute with median
-    data.loc[(data['MINIMUM_PAYMENTS'].isnull()==True),'MINIMUM_PAYMENTS'] = data['MINIMUM_PAYMENTS'].median()
-    data.loc[(data['CREDIT_LIMIT'].isnull()==True),'CREDIT_LIMIT'] = data['CREDIT_LIMIT'].median()
+  We will inpute these missing values with the median value.
+  
+         # inpute with median
+         data.loc[(data['MINIMUM_PAYMENTS'].isnull()==True),'MINIMUM_PAYMENTS'] = data['MINIMUM_PAYMENTS'].median()
+         data.loc[(data['CREDIT_LIMIT'].isnull()==True),'CREDIT_LIMIT'] = data['CREDIT_LIMIT'].median()
     # double check
     data.isna().sum()
-    Now we drop CUST_ID column, then normalize the input values using StandardScaler().
+  Now we drop CUST_ID column, then normalize the input values using StandardScaler().
+    
     # drop ID column
     data = data.drop('CUST_ID', 1)
 
@@ -646,17 +649,24 @@ Following is the Data Dictionary for Credit Card dataset:<br>
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data)
     data_scaled.shape
+    
     data_imputed = pd.DataFrame(data_scaled, columns=data.columns)
-    We should now be good to go for clustering.
+   We should now be good to go for clustering.
 ## Clustering
 ### Correlation Check
     plt.figure(figsize = (12, 12))
     sns.heatmap(data_imputed.corr(), annot=True, cmap='coolwarm', 
                 xticklabels=data_imputed.columns,
                 yticklabels=data_imputed.columns)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/f1352170-e383-41fe-9cea-888b18624483)
+
 ### Clustering using K-Means
+
 In this section we will perform K-Means clustering on the data and check the clustering metrics (inertia, silhouette scores).
+
 ### Inertia Plot
+
 First, we make the inertia plot:
 
       # inertia plotter function
@@ -676,33 +686,38 @@ First, we make the inertia plot:
           
       inertia_plot(KMeans, data_imputed)
       
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/242a075a-4a9e-411f-9fa4-4621d5069348)
+      
 Using the elbow method, we pick a good number of clusters to be 6.
 
 ### Silhouette Scores
+
 Silhouette analysis can be used to study the separation distance between the resulting clusters. The silhouette plot displays a measure of how close each point in one cluster is to points in the neighboring clusters and thus provides a way to assess parameters like number of clusters visually. This measure has a range of [-1, 1].
+
 We will now check the silhouette scores for different numbers of clusters. 
-def silh_samp_cluster(clust,  X, start=2, stop=5, metric = 'euclidean'):
-    # taken from sebastian Raschkas book Python Machine Learning second edition
-    for x in range(start, stop):
-        km = clust(n_clusters = x)
-        y_km = km.fit_predict(X)
-        cluster_labels = np.unique(y_km)
-        n_clusters = cluster_labels.shape[0]
-        silhouette_vals = silhouette_samples(X, y_km, metric = metric)
-        y_ax_lower, y_ax_upper =0,0
-        yticks = []
-        for i, c in enumerate(cluster_labels):
-            c_silhouette_vals = silhouette_vals[y_km == c]
-            c_silhouette_vals.sort()
-            y_ax_upper += len(c_silhouette_vals)
-            color = cm.jet(float(i)/n_clusters)
-            plt.barh(range(y_ax_lower, y_ax_upper),
-                    c_silhouette_vals,
-                    height=1.0,
-                    edgecolor='none',
-                    color = color)
-            yticks.append((y_ax_lower + y_ax_upper)/2.)
-            y_ax_lower+= len(c_silhouette_vals)
+
+    def silh_samp_cluster(clust,  X, start=2, stop=5, metric = 'euclidean'):
+        # taken from sebastian Raschkas book Python Machine Learning second edition
+        for x in range(start, stop):
+            km = clust(n_clusters = x)
+            y_km = km.fit_predict(X)
+            cluster_labels = np.unique(y_km)
+            n_clusters = cluster_labels.shape[0]
+            silhouette_vals = silhouette_samples(X, y_km, metric = metric)
+            y_ax_lower, y_ax_upper =0,0
+            yticks = []
+            for i, c in enumerate(cluster_labels):
+                c_silhouette_vals = silhouette_vals[y_km == c]
+                c_silhouette_vals.sort()
+                y_ax_upper += len(c_silhouette_vals)
+                color = cm.jet(float(i)/n_clusters)
+                plt.barh(range(y_ax_lower, y_ax_upper),
+                        c_silhouette_vals,
+                        height=1.0,
+                        edgecolor='none',
+                        color = color)
+                yticks.append((y_ax_lower + y_ax_upper)/2.)
+                y_ax_lower+= len(c_silhouette_vals)
 
         silhouette_avg = np.mean(silhouette_vals)
         plt.axvline(silhouette_avg,
@@ -713,186 +728,256 @@ def silh_samp_cluster(clust,  X, start=2, stop=5, metric = 'euclidean'):
         plt.xlabel('Silhouette Coefficient')
         plt.title('Silhouette for ' + str(x) + " Clusters")
         plt.show()
-for x in range(2, 7):
-    alg = KMeans(n_clusters = x, )
-    label = alg.fit_predict(data_imputed)
-    print('Silhouette-Score for', x,  'Clusters: ', silhouette_score(data_imputed, label))
+
+        
+    for x in range(2, 7):
+        alg = KMeans(n_clusters = x, )
+        label = alg.fit_predict(data_imputed)
+        print('Silhouette-Score for', x,  'Clusters: ', silhouette_score(data_imputed, label))
+        
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/9a98156f-8c35-4f51-84f1-66e6b7b39c4f)
+
 Silhouette plots:
-silh_samp_cluster(KMeans, data_imputed, stop=7)
+
+    silh_samp_cluster(KMeans, data_imputed, stop=7)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/ad76645e-48c7-47be-bef1-5cd42a41c339)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/25b7449f-a3ac-4aac-ab4a-d16e8c286079)
+
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/fcb8acf0-b986-42d5-9cbf-d1a69028d557)
+
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/2f4ec94f-0ea4-482a-8b3a-83ed82d9ba14)
+
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/dc03dbf9-bd84-4b1d-8691-e05823395b41)
+
+
 So far, we have a high average inertia, low silhouette scores, and very wide fluctuations in the size of the silhouette plots. This is not good. Let's apply feature extraction with PCA to improve clustering.
+
 ## Feature Extraction with PCA
 ### Clustering Metrics
 Now we will apply PCA to improve clustering. We should be able to see lower inertias and higher silhouette scores after feature extraction.
-# apply PCA and display clustering metrics
-for y in range(2, 5):
-    print("PCA with # of components: ", y)
-    pca = PCA(n_components=y)
-    data_p = pca.fit_transform(data_imputed)
-    for x in range(2, 7):
-        alg = KMeans(n_clusters = x, )
-        label = alg.fit_predict(data_p)
-        print('Silhouette-Score for', x,  'Clusters: ', silhouette_score(data_p, label) , '       Inertia: ',alg.inertia_)
-    print()
+
+    # apply PCA and display clustering metrics
+    for y in range(2, 5):
+        print("PCA with # of components: ", y)
+        pca = PCA(n_components=y)
+        data_p = pca.fit_transform(data_imputed)
+        for x in range(2, 7):
+            alg = KMeans(n_clusters = x, )
+            label = alg.fit_predict(data_p)
+            print('Silhouette-Score for', x,  'Clusters: ', silhouette_score(data_p, label) , '       Inertia: ',alg.inertia_)
+        print()
+        
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/91aeb396-ab37-4878-960c-dd8d2d26ac9c)
+
 As you can see, 2 PCA components with 5-6 clusters would be our best bet. 
+
 ## Visualization
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(KMeans(n_clusters = 5,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(KMeans(n_clusters = 5,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    fig = plt.figure(figsize = (18, 7))
+    colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
+    plt.subplot(121)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.legend()
+    plt.title('KMeans Clustering with 5 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
 
-fig = plt.figure(figsize = (18, 7))
-colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
-plt.subplot(121)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.legend()
-plt.title('KMeans Clustering with 5 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(KMeans(n_clusters = 6,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    plt.subplot(122)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
+    plt.legend()
+    plt.title('KMeans Clustering with 6 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
 
 
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(KMeans(n_clusters = 6,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/2dd58d1c-c745-4c2b-a153-cfd1d0d1bf63)
 
-plt.subplot(122)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
-plt.legend()
-plt.title('KMeans Clustering with 6 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
 So far, by applying PCA we have made notable improvement to KMeans model. Let's try other clustering models as well!
+
 ## Agglomerative Hierarchical Clustering with PCA
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(AgglomerativeClustering(n_clusters = 5,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(AgglomerativeClustering(n_clusters = 5,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    fig = plt.figure(figsize = (18, 7))
+    colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
+    plt.subplot(121)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.legend()
+    plt.title('Agglomerative Hierarchical Clustering with 5 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
 
-fig = plt.figure(figsize = (18, 7))
-colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
-plt.subplot(121)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.legend()
-plt.title('Agglomerative Hierarchical Clustering with 5 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
 
-
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(AgglomerativeClustering(n_clusters = 6,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
-
-plt.subplot(122)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
-plt.legend()
-plt.title('Agglomerative Hierarchical Clustering with 6 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(AgglomerativeClustering(n_clusters = 6,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    plt.subplot(122)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
+    plt.legend()
+    plt.title('Agglomerative Hierarchical Clustering with 6 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/3ab1d2ef-3e6e-46f6-9428-ebc942fea485)
+    
 ## Gaussian Mixture Clustering with PCA
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(GaussianMixture(n_components = 5,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
 
-fig = plt.figure(figsize = (18, 7))
-colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
-plt.subplot(121)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.legend()
-plt.title('Gaussian Mixture Clustering with 5 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(GaussianMixture(n_components = 5,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    fig = plt.figure(figsize = (18, 7))
+    colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
+    plt.subplot(121)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.legend()
+    plt.title('Gaussian Mixture Clustering with 5 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
 
 
-data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
-preds = pd.Series(GaussianMixture(n_components = 6,).fit_predict(data_p))
-data_p = pd.concat([data_p, preds], axis =1)
-data_p.columns = [0,1,'target']
+    data_p = pd.DataFrame(PCA(n_components = 2).fit_transform(data_imputed))
+    preds = pd.Series(GaussianMixture(n_components = 6,).fit_predict(data_p))
+    data_p = pd.concat([data_p, preds], axis =1)
+    data_p.columns = [0,1,'target']
+    
+    plt.subplot(122)
+    plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
+    plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
+    plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
+    plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
+    plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
+    plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
+    plt.legend()
+    plt.title('Gaussian Mixture Clustering with 6 Clusters')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
 
-plt.subplot(122)
-plt.scatter(data_p[data_p['target']==0].iloc[:,0], data_p[data_p.target==0].iloc[:,1], c = colors[0], label = 'cluster 1')
-plt.scatter(data_p[data_p['target']==1].iloc[:,0], data_p[data_p.target==1].iloc[:,1], c = colors[1], label = 'cluster 2')
-plt.scatter(data_p[data_p['target']==2].iloc[:,0], data_p[data_p.target==2].iloc[:,1], c = colors[2], label = 'cluster 3')
-plt.scatter(data_p[data_p['target']==3].iloc[:,0], data_p[data_p.target==3].iloc[:,1], c = colors[3], label = 'cluster 4')
-plt.scatter(data_p[data_p['target']==4].iloc[:,0], data_p[data_p.target==4].iloc[:,1], c = colors[4], label = 'cluster 5')
-plt.scatter(data_p[data_p['target']==5].iloc[:,0], data_p[data_p.target==5].iloc[:,1], c = colors[5], label = 'cluster 6')
-plt.legend()
-plt.title('Gaussian Mixture Clustering with 6 Clusters')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/16078df9-0748-4049-937e-22b94814d06b)
+    
 # Exploratory Data Analysis
 We are picking 6 clusters for this EDA. Let's make a Seaborn pairplot with selected/best columns to show how the clusters are segmenting the samples:
-# select best columns
-best_cols = ["BALANCE", "PURCHASES", "CASH_ADVANCE", "CREDIT_LIMIT", "PAYMENTS", "MINIMUM_PAYMENTS"]
 
-# dataframe with best columns
-data_final = pd.DataFrame(data_imputed[best_cols])
+    # select best columns
+    best_cols = ["BALANCE", "PURCHASES", "CASH_ADVANCE", "CREDIT_LIMIT", "PAYMENTS", "MINIMUM_PAYMENTS"]
+    
+    # dataframe with best columns
+    data_final = pd.DataFrame(data_imputed[best_cols])
+    
+    print('New dataframe with best columns has just been created. Data shape: ' + str(data_final.shape))
+    
+    # apply KMeans clustering
+    alg = KMeans(n_clusters = 6)
+    label = alg.fit_predict(data_final)
+    
+    # create a 'cluster' column
+    data_final['cluster'] = label
+    best_cols.append('cluster')
+    
+    # make a Seaborn pairplot
+    sns.pairplot(data_final[best_cols], hue='cluster')
 
-print('New dataframe with best columns has just been created. Data shape: ' + str(data_final.shape))
-# apply KMeans clustering
-alg = KMeans(n_clusters = 6)
-label = alg.fit_predict(data_final)
+  ![image](https://github.com/nithyap2209/Final-project/assets/92367257/968894e1-6e4e-4929-966a-9808de10bc91)
 
-# create a 'cluster' column
-data_final['cluster'] = label
-best_cols.append('cluster')
-
-# make a Seaborn pairplot
-sns.pairplot(data_final[best_cols], hue='cluster')
 We can see some interesting correlations between features and clusters that we have made above. Let's get into detailed analysis.
+
 ## Cluster 0 (Blue): The Average Joe
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'],
-            y_vars=['cluster'],
-            height=5, aspect=1)
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'],
+                y_vars=['cluster'],
+                height=5, aspect=1)
+
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/918ec995-33e3-4c80-8b93-9cd157f6c175)
+               
 This group of users, while having the highest number of users by far, is fairly frugal: they have lowest purchases, second lowest payments, and lowest credit limit. The bank would not make much profit from this group, so there should be some sorts of strategy to attract these people more.
+
 ## Cluster 1 (Orange): The Active Users
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'],
-            y_vars=['cluster'],
-            height=5, aspect=1)
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'],
+                y_vars=['cluster'],
+                height=5, aspect=1)
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/fb1477c8-4529-453a-b869-dacee6ca2cb7)
+               
 This group of users is very active in general: they have second highest purchases, third highest payments, and the most varied credit limit values. This type of credit card users is the type you should spend the least time and effort on, as they are already the ideal one.
+
 ## Cluster 2 (Green): The Big Spenders
+
 The Big Spenders. This group is by far the most interesting to analyze, since they do not only have the highest number of purchases, highest payments, highest minimum payments, but the other features are also wildly varied in values. Let's take a quick look at the pairplots.
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'], y_vars=['cluster'],
-            height=5, aspect=1)
+
+        sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES', 'PAYMENTS', 'CREDIT_LIMIT'], y_vars=['cluster'],
+                    height=5, aspect=1)
+
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/c127dd69-bd22-4f8d-8685-d9e2c88d4368)
+                   
 As a nature of the "Big Spenders", there are many outliers in this cluster: people who have/make abnormally high balance, purchases, cash advance, and payment. The graph below will give you an impression of how outlier-heavy this cluster is - almost all the green dots are outliers relatively compared to the rest of the whole dataset.
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES'], y_vars=['PAYMENTS'],
+
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['PURCHASES'], y_vars=['PAYMENTS'],
             height=5, aspect=1)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/dacb2c1e-5726-4c22-b250-25a173cf5df1)
+            
 ## Cluster 3 (Red): The Money Borrowers
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['BALANCE', 'CASH_ADVANCE', 'PAYMENTS'],
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['BALANCE', 'CASH_ADVANCE', 'PAYMENTS'],
             y_vars=['cluster'],
             height=5, aspect=1)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/0dc9eb21-28e8-4120-a8a8-b0ffd6ef2e84)
+            
 Wildly varied balance, second highest payments, average purchases. The special thing about this cluster is that these people have the highest cash advance by far - there is even one extreme case that has like 25 cash advance points. We call these people "The Money Borrowers".
 ## Cluster 4 (Purple): The High Riskers
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['MINIMUM_PAYMENTS'], y_vars=['CREDIT_LIMIT'],
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['MINIMUM_PAYMENTS'], y_vars=['CREDIT_LIMIT'],
             height=5, aspect=1)
+
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/37ccfaa0-f46d-4c0c-9d57-35bcd40b3090)
+           
 This group has absurdly high minimum payments while having the second lowest credit limit. It looks like the bank has identified them as higher risk.
 ## Cluster 5 (Brown): The Wildcards
-sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['BALANCE'], y_vars=['CREDIT_LIMIT'],
+    sns.pairplot(data_final[best_cols], hue='cluster', x_vars=['BALANCE'], y_vars=['CREDIT_LIMIT'],
             height=5, aspect=1)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/532d797d-4d00-4338-874f-fe5790c92ef5)
+            
 This group is troublesome to analyze and to come up with a good marketing strategy towards, as both their credit limit and balance values are wildly varied. As you can see, the above graph looks like half of it was made of the color brown!
+
 # Summary and Possible Marketing Strategy
 We have learned a lot from this dataset by segmenting the customers into six smaller groups: the Average Joe, the Active Users, the Big Spenders, the Money Borrowers, the High Riskers, and the Wildcards. To conclude this cluster analysis, let's sum up what we have learned and some possible marketing strategies:<br>
 * The Average Joe do not use credit card very much in their daily life. They have healthy finances and low debts. While encouraging these people to use credit cards more is necessary for the company's profit, business ethics and social responsibility should also be considered.<br>
@@ -902,6 +987,7 @@ We have learned a lot from this dataset by segmenting the customers into six sma
 * Some people are just bad at finance management - for example, the Money Borrowers. This should not be taken lightly.<br>
 <br>
 * Although we are currently doing a good job at managing the High Riskers by giving them low credit limits, more marketing strategies targeting this group of customers should be considered.<br>
+
 # Conclusion
 In this project, we have performed data preprocessing, feature extraction with PCA, looked at various clustering metrics (inertias, silhouette scores), experimented with various Clustering algorithms (KMeans Clustering, Agglomerative Hierarchical Clustering, Gaussian Mixture Clustering), data visualizations, and business analytics. 
 This project is also my first try on the business side of Data Science, and how we can use Machine Learning to solve practical, real life issues.
