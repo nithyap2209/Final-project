@@ -293,4 +293,157 @@ The primary objective of eye disease classification is to leverage machine learn
 
 ![image](https://github.com/nithyap2209/Final-project/assets/92367257/38a6a01d-1484-4c63-8cb4-a724b6171f37)
 
+## LOAD STATUS PREDICTION
+
+### IMPORT LIBRARY 
+    import pandas as pd  ##for data manipulation
+    import numpy as np   # for linear algebra 
+    import matplotlib.pyplot as plt #for creating static, interactive, and animated visualizations in various formats. 
+    import seaborn as sns  # Python data visualization library
+    from sklearn.model_selection import train_test_split
+    from sklearn.linear_model import LogisticRegression
+    import matplotlib.image as img
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import classification_report # for Precision and Recall Analysis
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.naive_bayes import GaussianNB
+
+### LOAD AND READ DATA 
+    data=pd.read_csv(r"C:\Users\Selvam\OneDrive\Desktop\project\Loan Status Prediction\loan_data.csv")
+### DATA EXPLORATION
+    data.shape
+    data.head()
+    data.columns
+    data.info()
+    data.isna().sum()
+    data.dropna(inplace=True)
+    data.isna().sum()
+    data.tail() 
+### DATA VISUALIZATION
+    sns.pairplot(data)
+   ![image](https://github.com/nithyap2209/Final-project/assets/92367257/12f7b980-e041-4717-a4ce-c3c30945fb90)
+
+    sns.scatterplot(data = data , x='ApplicantIncome' , y='Loan_Amount_Term')
+  ![image](https://github.com/nithyap2209/Final-project/assets/92367257/c73b6933-d4e0-4ce9-ac18-31b8a5aa9e17)
+  
+    sns.countplot(data=data,x='Gender')
+    #  countplot for Frequency Counts & Data Exploration
+  
+  ![image](https://github.com/nithyap2209/Final-project/assets/92367257/e089825e-9d13-42eb-bc61-39cd915be51a)
+  
+
+    data['Married'].hist(bins=30) # histplot  for Visualizing Data Distribution 
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/9290d6b5-05b8-4f6b-86dc-b8b71b2e9f2e)
+
+    sns.displot(data['Education'])
+ 
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/abdf156c-1f14-40e1-b236-7fdee43b1877)
+   
+    Income = data.groupby("Dependents")["ApplicantIncome"].mean()
+    plt.plot(Income.index, Income.values, color="deepskyblue", linewidth=6)
+    plt.title("The Dance of Dependents Over ApplicantIncome", fontsize=22, fontweight="bold")
+    plt.show()
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/9b12a15b-f478-477b-b381-0b42f81d0121)
+
+ 
+### DATA PREPROCESSING 
+    x = data.drop('Loan_Status',axis=1)
+    y = data['Loan_Status']
+    from sklearn.preprocessing import LabelEncoder
+    label_encoder = LabelEncoder()
+    for col in x.columns:
+        x[col] = label_encoder.fit_transform(x[col]) ## HANDEL X 
+    x.head()
+    y.unique()
+    mapper_loan={'N':0,'Y':1}
+    y=y.map(mapper_loan) # HANDEL Y 
+    y.head()
+### SPLIT DATA
+
+     x_train , x_test , y_train , y_test = train_test_split (x,y,test_size = .3 ,shuffle = True , random_state =42)
+     print("x_train shape = ", x_train.shape)
+     print("y_train shape = ", y_train.shape)
+     print("x_test shape = ", x_test.shape)
+     print("y_test shape = ", y_test.shape)
+     shapes = {
+         'X_train': x_train.shape[0],
+         'y_train': y_train.shape[0],
+         'X_test': x_test.shape[0],
+         'y_test': y_test.shape[0]
+     }
+     plt.figure(figsize=(10, 6))
+     plt.bar(shapes.keys(), shapes.values())
+     plt.xlabel('Datasets')
+     plt.ylabel('Number of instances')
+     plt.title('Distribution of Training and Validation Sets')
+     plt.show()
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/83ed747e-150e-4cf2-979c-e808c4944042)
+     
+### DATA SCSLING 
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.fit_transform(x_test)
+### LOGISTIC REGRESSION MODEL
+    lr_model=LogisticRegression() # call model
+    
+    lr_model.fit(x_train,y_train)
+    y_pred=lr_model.predict(x_test)
+    y_pred
+    con= confusion_matrix(y_test,y_pred) # Evaluation of Model Performance & Sensitivity and Specificity Analysis
+    sns.heatmap(con, annot=True, cmap='viridis', cbar=True) # heatmap for Matrix Data Representation
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/df174e41-06aa-4aed-9959-6605d3b0c869)
+    
+    sns.clustermap(con, annot=True, cmap='viridis', cbar=True) # clustermap for Discovering Patterns and Relationships
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/baa9d09e-44db-42e6-ace0-91d357d4351c)
+    
+    print("classification_report is ",classification_report(y_test ,y_pred)) 
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/6012ef7a-3daf-4512-8607-5288811d6992)
+    
+### KNN MODEL
+    knn_model = KNeighborsClassifier()
+    knn_model.fit(x_train, y_train)
+    knn_pred = knn_model.predict(x_test)
+    knn_pred
+    print(classification_report(y_test, knn_pred))
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/d90434b6-8910-4012-bcc4-5f315ba0773f)
+    
+### GAUSSIANNB MODEL
+    nb_model = GaussianNB()
+    nb_model.fit(x_train, y_train)
+    y_pred = nb_model.predict(x_test)
+    y_pred
+    print(classification_report(y_test, y_pred))
+
+  ![image](https://github.com/nithyap2209/Final-project/assets/92367257/76e2113e-f1a7-46b7-a25e-39b826f87ee4)
+
+## **Enhance Model Performance**
+    import warnings
+    warnings.filterwarnings("ignore")
+    
+    from sklearn.model_selection import GridSearchCV
+    parameters = [{'penalty':['l1','l2']}, 
+                  {'C':[1, 10, 100, 1000]}]
+    grid_search = GridSearchCV(lr_model,
+                               parameters,
+                               cv = 5,
+                               verbose=0)
+
+
+    grid_search.fit(x_train, y_train)
+    print("classification_report is ",classification_report(y_test ,y_pred)) 
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/ad36ecc3-a429-4ee3-8d87-51400d707c74)
+    
+
+
+
     
