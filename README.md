@@ -18,66 +18,70 @@ The primary objective of eye disease classification is to leverage machine learn
 - Glaucoma: Glaucoma is a group of eye diseases that damage the optic nerve, often due to increased fluid pressure in the eye. It gradually leads to vision loss, starting with peripheral vision and potentially progressing to complete blindness. Timely diagnosis, treatment, and ongoing monitoring are vital for preserving vision and preventing irreversible damage.
   
 ## Import Libraries
-### import system libs
-import os
-import time
-### import data handling tools
-import cv2
-import numpy as np
-import pandas as pd
-from PIL import Image
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, classification_report, f1_score
-### import Deep learning Libraries
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.models import Model
-from tensorflow.keras.metrics import categorical_crossentropy
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.layers import Flatten, Dense, Activation, GlobalAveragePooling2D
-### Ignore Warnings
-import warnings
-warnings.filterwarnings("ignore")
+    ### import system libs
+    import os
+    import time
+    ### import data handling tools
+    import cv2
+    import numpy as np
+    import pandas as pd
+    from PIL import Image
+    import matplotlib.pyplot as plt
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import confusion_matrix, classification_report, f1_score
+    ### import Deep learning Libraries
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras.models import Model
+    from tensorflow.keras.metrics import categorical_crossentropy
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.layers import Flatten, Dense, Activation, GlobalAveragePooling2D
+    ### Ignore Warnings
+    import warnings
+    warnings.filterwarnings("ignore")
 
 ### Class for Loading and Splitting Datasets
-class EyeDiseaseDataset:
-    def __init__(self, dataDir):
-        self.data_dir = dataDir
+    class EyeDiseaseDataset:
+        def __init__(self, dataDir):
+            self.data_dir = dataDir
+            
+        def dataPaths(self):
+            filepaths = []
+            labels = []
+            folds = os.listdir(self.data_dir)
+            for fold in folds:
+                foldPath = os.path.join(self.data_dir, fold)
+                filelist = os.listdir(foldPath)
+                for file in filelist:
+                    fpath = os.path.join(foldPath, file)
+                    filepaths.append(fpath)
+                    labels.append(fold)
+            return filepaths, labels
         
-    def dataPaths(self):
-        filepaths = []
-        labels = []
-        folds = os.listdir(self.data_dir)
-        for fold in folds:
-            foldPath = os.path.join(self.data_dir, fold)
-            filelist = os.listdir(foldPath)
-            for file in filelist:
-                fpath = os.path.join(foldPath, file)
-                filepaths.append(fpath)
-                labels.append(fold)
-        return filepaths, labels
-        
-    def dataFrame(self, files, labels):
+        def dataFrame(self, files, labels):
+    
+            Fseries = pd.Series(files, name='filepaths')
+            Lseries = pd.Series(labels, name='labels')
+            return pd.concat([Fseries, Lseries], axis=1)
+       
+        def split_(self):
+            files, labels = self.dataPaths()
+            df = self.dataFrame(files, labels)
+            strat = df['labels']
+            trainData, dummyData = train_test_split(df, train_size=0.8, shuffle=True, random_state=42, stratify=strat)
+            strat = dummyData['labels']
+            validData, testData = train_test_split(dummyData, train_size=0.5, shuffle=True, random_state=42, stratify=strat)
+            return trainData, validData, testData
 
-        Fseries = pd.Series(files, name='filepaths')
-        Lseries = pd.Series(labels, name='labels')
-        return pd.concat([Fseries, Lseries], axis=1)
-   
-    def split_(self):
-        files, labels = self.dataPaths()
-        df = self.dataFrame(files, labels)
-        strat = df['labels']
-        trainData, dummyData = train_test_split(df, train_size=0.8, shuffle=True, random_state=42, stratify=strat)
-        strat = dummyData['labels']
-        validData, testData = train_test_split(dummyData, train_size=0.5, shuffle=True, random_state=42, stratify=strat)
-        return trainData, validData, testData
 
-dataDir=r"C:\Users\Selvam\OneDrive\Desktop\project\eye-diseases-classification\dataset"       
-dataSplit = EyeDiseaseDataset(dataDir)
-train_data, valid_data, test_data = dataSplit.split_()
-def display_random_image(df):
-    random_row = df.sample(1).iloc[0]
+     dataDir=r"C:\Users\Selvam\OneDrive\Desktop\project\eye-diseases-classification\dataset"   
+     
+      
+      dataSplit = EyeDiseaseDataset(dataDir)
+    train_data, valid_data, test_data = dataSplit.split_()
+    
+      def display_random_image(df):
+        random_row = df.sample(1).iloc[0]
 
     filepath = random_row['filepaths']
     label = random_row['labels']
@@ -88,15 +92,17 @@ def display_random_image(df):
     plt.axis('off')
     plt.show()
 
-display_random_image(train_data)
+    display_random_image(train_data)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/7c212ddd-e8a4-4ad4-8289-217eebe91a86)
+
 
 ### Function for Data Augmentation
-def augment_data( train_df, valid_df, test_df, batch_size=16):
+    def augment_data( train_df, valid_df, test_df, batch_size=16):
 
-    img_size = (256,256)
-    channels = 3
-    color = 'rgb'
-    
+      img_size = (256,256)
+      channels = 3
+      color = 'rgb'
+      
 
     train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
               rotation_range=30,
@@ -146,124 +152,145 @@ def augment_data( train_df, valid_df, test_df, batch_size=16):
     print("Shape of test images:", test_generator.image_shape)
           
     return train_generator, valid_generator, test_generator
-train_augmented, valid_augmented, test_augmented = augment_data(train_data, valid_data, test_data)
-def show_images(gen):
-      
-    g_dict = gen.class_indices        # defines dictionary {'class': index}
-    classes = list(g_dict.keys())     # defines list of dictionary's kays (classes), classes names : string
-    images, labels = next(gen)        # get a batch size samples from the generator
-    length = len(labels)       
-    sample = min(length, 20)   
-    plt.figure(figsize= (15, 17))
-    for i in range(sample):
-        plt.subplot(5, 5, i + 1)
-        image = images[i] / 255      
-        plt.imshow(image)
-        index = np.argmax(labels[i])  
-        class_name = classes[index]  
-        plt.title(class_name, color= 'blue', fontsize= 7 )
-        plt.axis('off')
-    plt.show()
-show_images(train_augmented)
-### Download and compile the model
-from tensorflow.keras.applications import EfficientNetB3
-from tensorflow.keras import regularizers
+    train_augmented, valid_augmented, test_augmented = augment_data(train_data, valid_data, test_data)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/6c610de2-7e99-407e-93c2-9c68a689631a)
 
-classes = len(list(train_augmented.class_indices.keys()))
-
-base_model = EfficientNetB3(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
-
-for layer in base_model.layers:
-    layer.trainable = False
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = Dense(512, activation='relu' , kernel_regularizer = regularizers.l2(0.01))(x)
-
-predictions = Dense(classes, activation='softmax', kernel_regularizer = regularizers.l2(0.01))(x)
-
-model = Model(inputs=base_model.input, outputs=predictions)
-
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-
-model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-### Fit the model
-history = model.fit(
-    train_augmented,
-    epochs=15, 
-    validation_data=valid_augmented,
-    )
-### Plot the Accuracy and loss
-train_accuracy = history.history['accuracy']
-val_accuracy = history.history['val_accuracy']
-print("Training Accuracy:", train_accuracy[-1])
-print("Validation Accuracy:", val_accuracy[-1])
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
-plt.plot(history.history['accuracy'], label='Training Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.show()
-### Display the Actual and Predicted images
-def plot_actual_vs_predicted(model, test_data, num_samples=3):
-    
-    # Get a batch of test data
-    test_images, test_labels = next(iter(test_data))
-
-    predictions = model.predict(test_images)
-
-    class_labels = list(train_augmented.class_indices.keys())
-
-    sample_indices = np.random.choice(range(len(test_images)), num_samples, replace=False)
-      # Plot the images with actual and predicted labels
-    for i in sample_indices:
-        actual_label = class_labels[np.argmax(test_labels[i])]
-        predicted_label = class_labels[np.argmax(predictions[i])]
-        plt.figure(figsize=(8, 4))
-        # Actual Image
-        plt.subplot(1, 2, 1)
-        plt.imshow(test_images[i].astype(np.uint8))  
-        plt.title(f'Actual: {actual_label}')
-        plt.axis('off')
-        # Predicted Image
-        plt.subplot(1, 2, 2)
-        plt.imshow(test_images[i].astype(np.uint8))  
-        plt.title(f'Predicted: {predicted_label}')
-        plt.axis('off')
+    def show_images(gen):
+        g_dict = gen.class_indices        # defines dictionary {'class': index}
+        classes = list(g_dict.keys())     # defines list of dictionary's kays (classes), classes names : string
+        images, labels = next(gen)        # get a batch size samples from the generator
+        length = len(labels)       
+        sample = min(length, 20)   
+        plt.figure(figsize= (15, 17))
+        for i in range(sample):
+            plt.subplot(5, 5, i + 1)
+            image = images[i] / 255      
+            plt.imshow(image)
+            index = np.argmax(labels[i])  
+            class_name = classes[index]  
+            plt.title(class_name, color= 'blue', fontsize= 7 )
+            plt.axis('off')
         plt.show()
-plot_actual_vs_predicted(model, test_augmented)
+    show_images(train_augmented)
+![output](https://github.com/nithyap2209/Final-project/assets/92367257/53e8fd73-a808-4aab-aa79-5794fd540e53)
+
+### Download and compile the model
+    from tensorflow.keras.applications import EfficientNetB3
+    from tensorflow.keras import regularizers
+    
+    classes = len(list(train_augmented.class_indices.keys()))
+    
+    base_model = EfficientNetB3(weights='imagenet', include_top=False, input_shape=(256, 256, 3))
+    
+    for layer in base_model.layers:
+        layer.trainable = False
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(512, activation='relu' , kernel_regularizer = regularizers.l2(0.01))(x)
+    
+    predictions = Dense(classes, activation='softmax', kernel_regularizer = regularizers.l2(0.01))(x)
+    
+    model = Model(inputs=base_model.input, outputs=predictions)
+    
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    
+    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+### Fit the model
+
+    history = model.fit(
+        train_augmented,
+        epochs=15, 
+        validation_data=valid_augmented,
+        )
+        
+   ![image](https://github.com/nithyap2209/Final-project/assets/92367257/5f74ecc5-4a78-4c6c-8421-6d3fba46618d)
+
+
+### Plot the Accuracy and loss
+    train_accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
+    print("Training Accuracy:", train_accuracy[-1])
+    print("Validation Accuracy:", val_accuracy[-1])
+    plt.plot(history.history['loss'], label='Training Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+    plt.plot(history.history['accuracy'], label='Training Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/1accd5a5-d13e-43d6-8008-0ec12a0690f4)
+    
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/73800eed-c71f-4750-9df9-23bf7e6f1575)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/00a33e45-719f-4e7e-98c1-51d4af488a73)
+### Display the Actual and Predicted images
+    def plot_actual_vs_predicted(model, test_data, num_samples=3):
+        
+        # Get a batch of test data
+        test_images, test_labels = next(iter(test_data))
+    
+        predictions = model.predict(test_images)
+    
+        class_labels = list(train_augmented.class_indices.keys())
+    
+        sample_indices = np.random.choice(range(len(test_images)), num_samples, replace=False)
+          # Plot the images with actual and predicted labels
+        for i in sample_indices:
+            actual_label = class_labels[np.argmax(test_labels[i])]
+            predicted_label = class_labels[np.argmax(predictions[i])]
+            plt.figure(figsize=(8, 4))
+            # Actual Image
+            plt.subplot(1, 2, 1)
+            plt.imshow(test_images[i].astype(np.uint8))  
+            plt.title(f'Actual: {actual_label}')
+            plt.axis('off')
+            # Predicted Image
+            plt.subplot(1, 2, 2)
+            plt.imshow(test_images[i].astype(np.uint8))  
+            plt.title(f'Predicted: {predicted_label}')
+            plt.axis('off')
+            plt.show()
+    plot_actual_vs_predicted(model, test_augmented)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/3203101d-b681-4dd5-abb6-948a0a1e13e9)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/8beaee3a-eaa9-43af-acc5-3613d379aa18)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/efcc2afa-8a01-4f03-a351-c52a23db7298)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/9205802c-8e56-49ee-bffc-e4002c94fef5)
+
 ### Confusion Matrix
-import seaborn as sns
-from sklearn.metrics import confusion_matrix, classification_report
+    import seaborn as sns
+    from sklearn.metrics import confusion_matrix, classification_report
+    
+    # Predict the classes for the test data
+    test_labels = test_augmented.classes
+    predictions = model.predict(test_augmented)
+    predicted_classes = np.argmax(predictions, axis=1)
+    
+    # Get the class labels
+    class_labels = list(train_augmented.class_indices.keys())
+    
+    # Generate the confusion matrix
+    conf_matrix = confusion_matrix(test_labels, predicted_classes)
+    
+    # Plot the confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=class_labels, yticklabels=class_labels)
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.title('Confusion Matrix')
+    plt.show()
+    
+    # Print classification report
+    print(classification_report(test_labels, predicted_classes, target_names=class_labels))
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/73d693cf-962a-43b6-81a1-2b9ff34d1199)
 
-# Predict the classes for the test data
-test_labels = test_augmented.classes
-predictions = model.predict(test_augmented)
-predicted_classes = np.argmax(predictions, axis=1)
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/89a3adf5-a909-444e-a3a9-90fbedc6e263)
 
-# Get the class labels
-class_labels = list(train_augmented.class_indices.keys())
 
-# Generate the confusion matrix
-conf_matrix = confusion_matrix(test_labels, predicted_classes)
-
-# Plot the confusion matrix
-plt.figure(figsize=(10, 8))
-sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=class_labels, yticklabels=class_labels)
-plt.xlabel('Predicted Labels')
-plt.ylabel('True Labels')
-plt.title('Confusion Matrix')
-plt.show()
-
-# Print classification report
-print(classification_report(test_labels, predicted_classes, target_names=class_labels))
-
-![image](https://github.com/nithyap2209/Final-project/assets/92367257/424631ac-f333-44bd-a7c4-6925e58c7642)
-
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/38a6a01d-1484-4c63-8cb4-a724b6171f37)
 
     
