@@ -293,7 +293,9 @@ The primary objective of eye disease classification is to leverage machine learn
 
 ![image](https://github.com/nithyap2209/Final-project/assets/92367257/38a6a01d-1484-4c63-8cb4-a724b6171f37)
 
-## LOAD STATUS PREDICTION
+
+
+# LOAN STATUS PREDICTION
 
 ### IMPORT LIBRARY 
     import pandas as pd  ##for data manipulation
@@ -442,6 +444,131 @@ The primary objective of eye disease classification is to leverage machine learn
     print("classification_report is ",classification_report(y_test ,y_pred)) 
 
 ![image](https://github.com/nithyap2209/Final-project/assets/92367257/ad36ecc3-a429-4ee3-8d87-51400d707c74)
+
+
+
+#  SALES FORECASTING
+
+   ## Import libraries
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+    from sklearn.impute import SimpleImputer
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+    # Ignore warnings
+    import warnings
+    warnings.filterwarnings("ignore")
+    
+## Load the datasets
+    stores = pd.read_csv(r"C:\Users\Selvam\OneDrive\Desktop\project\Sales_Forecasting\Sales Forecasting\stores.csv")
+    features = pd.read_csv(r"C:\Users\Selvam\OneDrive\Desktop\project\Sales_Forecasting\Sales Forecasting\features.csv")
+    train = pd.read_csv(r"C:\Users\Selvam\OneDrive\Desktop\project\Sales_Forecasting\Sales Forecasting\train.csv")
+## Display the first few rows of each dataset
+    print(stores.head())
+    print(features.head())
+    print(train.head())
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/ab46f309-dd9e-4e1e-98fc-8a56c54c5e62)
+    
+    # Merge datasets on 'Store' and 'Date'
+    data = train.merge(stores, on='Store')
+    data = data.merge(features, on=['Store', 'Date', 'IsHoliday'])
+    # Display the first few rows of the merged dataset
+    print(data.head())
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/63bdf245-9aae-4d9e-a0e6-73541b38026c)
+
+    # Convert 'Date' to datetime type
+    data['Date'] = pd.to_datetime(data['Date'])
+
+    # Extract year, month, and day from 'Date'
+    data['Year'] = data['Date'].dt.year
+    data['Month'] = data['Date'].dt.month
+    data['Day'] = data['Date'].dt.day
+
+    # Drop the 'Date' column as we have extracted useful features from it
+    data = data.drop(columns=['Date'])
+
+### Check for missing values
+    print(data.isnull().sum())
+
+    # Fill missing values for Markdown columns with 0 (assuming missing means no markdown)
+    data.fillna(0, inplace=True)
+
+    # Encode categorical features
+    categorical_features = ['Store', 'Dept', 'Type', 'IsHoliday']
+    numerical_features = data.drop(columns=categorical_features + ['Weekly_Sales']).columns
+
+    # Preprocessing pipelines for numerical and categorical data
+    numerical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())
+    ])
+    
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='most_frequent')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))
+    ])
+
+    # Combine preprocessing steps
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numerical_transformer, numerical_features),
+            ('cat', categorical_transformer, categorical_features)
+        ])
+
+ ![image](https://github.com/nithyap2209/Final-project/assets/92367257/cdc04ee9-3bbe-44f1-9d13-7c280b8221f7)
+       
+
+### Define features and target variable
+    X = data.drop(columns=['Weekly_Sales'])
+    y = data['Weekly_Sales']
+
+### Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    print("Training data shape:", X_train.shape)
+    print("Testing data shape:", X_test.shape)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/f0d65a1b-5b21-4362-8d60-0256100c90d6)
+    
+    # Use only 50% of the data
+    X_train_small, _, y_train_small, _ = train_test_split(X_train, y_train, test_size=0.5, random_state=42)
+    
+    model = Pipeline(steps=[('preprocessor', preprocessor),
+                            ('regressor', RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1))])
+    
+    model.fit(X_train_small, y_train_small)
+
+## Make predictions
+### Make predictions
+    y_pred = model.predict(X_test)
+
+### Calculate performance metrics
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    print(f'Mean Squared Error: {mse}')
+    print(f'Mean Absolute Error: {mae}')
+    print(f'R^2 Score: {r2}')
+
+### Plot actual vs predicted sales
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_pred, alpha=0.3)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], '--r')
+    plt.xlabel('Actual Sales')
+    plt.ylabel('Predicted Sales')
+    plt.title('Actual vs Predicted Sales')
+    plt.show()
+    
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/7c116062-9bce-4849-9b63-2bf80287cbb0)
+
+![image](https://github.com/nithyap2209/Final-project/assets/92367257/bd6af488-1a4e-45b3-8797-342840c033bc)
     
 
 
